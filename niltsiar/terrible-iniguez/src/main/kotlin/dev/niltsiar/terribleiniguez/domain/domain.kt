@@ -8,28 +8,36 @@ data class Episode(
     val title: String,
 )
 
-fun processEpisodes(episodes: List<Episode>?) {
-    val episodes = episodes ?: return
+data class EpisodesResult(
+    val nextEpisodeNumber: Int,
+    val totalDuration: Long,
+    val numberOfShortestEpisode: Int,
+    val selectedTitlesCombinedDurationUnderTwoHours: List<String>,
+)
 
-    episodes.sortedBy { ep -> ep.number }.let {
-        if (it.isNotEmpty()) {
-            val nextEpisodeNumber = it.last().number.toInt() + 1
-            val totalDuration = it.sumOf { ep -> ep.duration.inWholeSeconds }
-            val shortestEpisode = it.minByOrNull { ep -> ep.duration.inWholeSeconds }
-            val selectedTitles = it.shuffled()
-                .asSequence()
-                .runningFold(0L to null as Episode?) { acc, ep ->
-                    (acc.first + ep.duration.inWholeSeconds) to ep
-                }
-                .filter { it.first < 2 * 60 * 60 }
-                .mapNotNull { it.second }
-                .toList()
+fun processEpisodes(episodes: List<Episode>?): EpisodesResult? {
+    val episodes = episodes?.sortedBy { ep -> ep.number } ?: return null
 
-            println("Next episode number: $nextEpisodeNumber")
-            println("Total duration of all episodes: $totalDuration")
-            println("Number of the shortest episode: ${shortestEpisode?.number}")
-            println("Titles below 2 hours: ${selectedTitles.map { ep -> ep.title }}")
-            println("Duration of all selected titles: ${selectedTitles.sumOf { ep -> ep.duration.inWholeSeconds }}")
-        }
+    if (episodes.isEmpty()) {
+        return null
     }
+
+    val nextEpisodeNumber = episodes.last().number.toInt() + 1
+    val totalDuration = episodes.sumOf { ep -> ep.duration.inWholeSeconds }
+    val shortestEpisode = episodes.minBy { ep -> ep.duration.inWholeSeconds }
+    val selectedTitles = episodes.shuffled()
+        .asSequence()
+        .runningFold(0L to null as Episode?) { acc, ep ->
+            (acc.first + ep.duration.inWholeSeconds) to ep
+        }
+        .filter { it.first < 2 * 60 * 60 }
+        .mapNotNull { it.second }
+        .toList()
+
+    return EpisodesResult(
+        nextEpisodeNumber = nextEpisodeNumber,
+        totalDuration = totalDuration,
+        numberOfShortestEpisode = shortestEpisode.number,
+        selectedTitlesCombinedDurationUnderTwoHours = selectedTitles.map { ep -> ep.title },
+    )
 }
