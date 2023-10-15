@@ -9,6 +9,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonTransformingSerializer
@@ -18,6 +19,7 @@ const val API_URL = "https://tormenta-codigo-app-terrible.vercel.app/api/podcast
 
 private val json = Json {
     ignoreUnknownKeys = true
+    isLenient = true
 }
 
 @Serializable
@@ -36,13 +38,23 @@ object NetworkEpisodeDeserializer : JsonTransformingSerializer<List<NetworkEpiso
     }
 }
 
-suspend fun fetchEpisodes(): List<Episode>? {
+suspend fun fetchEpisodes(url: String = API_URL): List<Episode>? {
     return try {
         val httpClient = HttpClient(CIO)
-        val response = httpClient.get(API_URL)
-        println(response.bodyAsText())
-        json.decodeFromString(NetworkEpisodeDeserializer, response.bodyAsText())
-            .map { ep -> Episode(from = ep) }
+        val response = httpClient.get(url)
+        val textResponse = response.bodyAsText()
+        val jsonElement = json.decodeFromString<JsonElement>(textResponse)
+        val jsonEpisodes = jsonElement.jsonObject["data"] as JsonArray?
+        jsonEpisodes?.mapNotNull { jsonEpisode ->
+            try {
+                val networkEpisode = json.decodeFromJsonElement(NetworkEpisode.serializer(), jsonEpisode)
+                Episode(from = networkEpisode)
+            } catch (e: Exception) {
+                println("Error decoding the episode: $e")
+                println("Received json: $jsonEpisode")
+                null
+            }
+        }
     } catch (e: Exception) {
         println("Error fetching the episodes: $e")
         null
