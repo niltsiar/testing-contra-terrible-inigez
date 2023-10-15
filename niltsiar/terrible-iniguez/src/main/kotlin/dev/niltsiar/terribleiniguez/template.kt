@@ -69,8 +69,3 @@ fun processEpisodes(episodes: List<Episode>?) {
         }
     }
 }
-
-suspend fun main() {
-    val episodes = fetchEpisodes()
-    processEpisodes(episodes)
-}

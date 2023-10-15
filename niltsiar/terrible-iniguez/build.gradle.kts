@@ -9,7 +9,7 @@ plugins {
 }
 
 application {
-    mainClass by "dev.niltsiar.terribleiniguez.TemplateKt"
+    mainClass by "dev.niltsiar.terribleiniguez.MainKt"
 }
 
 repositories {
@@ -35,6 +35,10 @@ tasks {
             isNonStable(candidate.version) && !isNonStable(currentVersion)
         }
     }
+
+    withType<Test>().configureEach {
+        useJUnitPlatform()
+    }
 }
 
 // https://github.com/ben-manes/gradle-versions-plugin
@@ -50,4 +54,10 @@ dependencies {
     implementation(libs.kotlinx.datetime)
     implementation(libs.bundles.arrow)
     implementation(libs.bundles.ktor.client)
+    implementation("ch.qos.logback:logback-classic:1.2.3")
+
+
+
+    testImplementation(libs.bundles.kotest)
+    testImplementation(libs.mockk)
 }
