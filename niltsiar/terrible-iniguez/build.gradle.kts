@@ -9,7 +9,7 @@ plugins {
 }
 
 application {
-    mainClass by "dev.niltsiar.terrible-iniguez.MainKt"
+    mainClass by "dev.niltsiar.terribleiniguez.TemplateKt"
 }
 
 repositories {
@@ -49,4 +49,5 @@ dependencies {
     implementation(libs.kotlinx.serialization)
     implementation(libs.kotlinx.datetime)
     implementation(libs.bundles.arrow)
+    implementation(libs.bundles.ktor.client)
 }
