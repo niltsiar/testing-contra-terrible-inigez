@@ -54,9 +54,7 @@ dependencies {
     implementation(libs.kotlinx.datetime)
     implementation(libs.bundles.arrow)
     implementation(libs.bundles.ktor.client)
-    implementation("ch.qos.logback:logback-classic:1.2.3")
-
-
+    implementation(libs.logback)
 
     testImplementation(libs.bundles.kotest)
     testImplementation(libs.mockk)

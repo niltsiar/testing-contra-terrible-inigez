@@ -7,6 +7,7 @@ arrow = "1.2.1"
 kotlinx-sertialization = "1.6.0"
 kotlinx-datetime = "0.4.1"
 kotest = "5.7.2"
+kotest-arrow = "1.4.0"
 mockk = "1.13.8"
 logback = "1.4.11"
 
@@ -25,6 +26,7 @@ arrow-fx = { module = "io.arrow-kt:arrow-fx-coroutines", version.ref = "arrow" }
 kotest-runner = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 kotest-assertions = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
+kotest-arrow = { module = "io.kotest.extensions:kotest-assertions-arrow", version.ref = "kotest-arrow" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 
 [bundles]
@@ -43,6 +45,7 @@ kotest = [
     "kotest-runner",
     "kotest-assertions",
     "kotest-property",
+    "kotest-arrow",
 ]
 
 [plugins]
