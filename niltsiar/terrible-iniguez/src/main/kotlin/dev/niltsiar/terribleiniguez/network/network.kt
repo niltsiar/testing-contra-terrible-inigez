@@ -24,6 +24,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.longOrNull
 
 const val API_URL = "https://tormenta-codigo-app-terrible.vercel.app/api/podcast"
 
@@ -95,7 +96,15 @@ fun JsonElement.tryParseEpisode(): Either<Errors, Episode> = either {
         ?: title.removePrefix("WRP ").substringBefore(".").toIntOrNull()
         ?: raise(Errors.JsonParsingError.MissingNumber(this@tryParseEpisode))
 
-    TODO()
+    val duration = jsonObject["duration"]?.jsonPrimitive?.longOrNull
+        ?: jsonObject["supercoco"]?.jsonPrimitive?.longOrNull
+        ?: raise(Errors.JsonParsingError.MissingDuration(this@tryParseEpisode))
+
+    Episode(
+        number = number,
+        duration = duration.seconds,
+        title = title,
+    )
 }
 
 private fun Episode(from: NetworkEpisode): Episode {

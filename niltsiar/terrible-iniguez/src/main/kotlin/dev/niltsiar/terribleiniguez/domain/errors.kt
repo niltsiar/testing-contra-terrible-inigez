@@ -15,6 +15,7 @@ sealed interface Errors {
 
         data class MissingTitle(val json: JsonElement) : JsonParsingError
         data class MissingNumber(val json: JsonElement) : JsonParsingError
+        data class MissingDuration(val json: JsonElement) : JsonParsingError
 
     }
 }
