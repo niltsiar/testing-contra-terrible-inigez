@@ -19,7 +19,7 @@ data class EpisodesResult(
     val selectedTitlesCombinedDurationUnderTwoHours: List<String>,
 )
 
-fun processEpisodes(episodes: NonEmptyList<Episode>?): Either<Errors, EpisodesResult> = either {
+fun processEpisodes(episodes: NonEmptyList<Episode>): Either<Errors, EpisodesResult> = either {
     ensureNotNull(episodes) { Errors.NoPodcastsInResponseError }
 
     val sortedEpisodes = episodes.sortedBy { ep -> ep.number }
