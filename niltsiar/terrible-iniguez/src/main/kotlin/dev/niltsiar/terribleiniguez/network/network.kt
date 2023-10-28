@@ -15,6 +15,8 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -102,7 +104,7 @@ fun JsonElement.tryParseEpisode(): Either<Errors, Episode> = either {
 
     Episode(
         number = number,
-        duration = duration.seconds,
+        duration = duration.convertToSeconds(),
         title = title,
     )
 }
@@ -110,7 +112,15 @@ fun JsonElement.tryParseEpisode(): Either<Errors, Episode> = either {
 private fun Episode(from: NetworkEpisode): Episode {
     return Episode(
         number = from.number.toInt(),
-        duration = from.duration.toLong().seconds,
+        duration = from.duration.toLong().convertToSeconds(),
         title = from.title,
     )
+}
+
+private fun Long.convertToSeconds(): Duration {
+    return if (this > 1_000_000) {
+        microseconds.inWholeSeconds.seconds
+    } else {
+        seconds
+    }
 }

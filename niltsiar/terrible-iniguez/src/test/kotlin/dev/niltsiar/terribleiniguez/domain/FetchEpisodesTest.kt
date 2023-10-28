@@ -73,7 +73,7 @@ class FetchEpisodesTest : FreeSpec({
     "Given a bad encoded episode" - {
         "Given an episode with missing title" - {
             "When it is parsed" - {
-                "Then we received a MissingTitle error" {
+                "Then we receive a MissingTitle error" {
                     val badEpisode = """{
   "excerpt": "Preguntamos a un experto developer en node.js sobre las ventajas e inconvenientes de este lenguaje.",
   "published_at": 1694563528,
@@ -89,7 +89,7 @@ class FetchEpisodesTest : FreeSpec({
         }
         "Given an episode with missing number" - {
             "When it can be extracted from the title" - {
-                "Then we received the recovered episode" {
+                "Then we receive the recovered episode" {
                     val badEpisode = """{
   "title": "WRP 244. D\u00f3nde poner el foco para actualizarse",
   "excerpt": "Tu mejor opci\u00f3n para seguir actualizado.",
@@ -109,7 +109,7 @@ class FetchEpisodesTest : FreeSpec({
                 }
             }
             "When it can't be extracted from the title" - {
-                "Then we received a MissingNumber error" {
+                "Then we receive a MissingNumber error" {
                     val badEpisode = """{
   "title": "WRP WRONG_NUMBER. Desplegar en producci\u00f3n: Estrategias Feature Flags y Expand-Contract",
   "excerpt": "Tipos de despliegue y definici\u00f3n de los m\u00e1s efectivos.",
@@ -124,9 +124,32 @@ class FetchEpisodesTest : FreeSpec({
                 }
             }
         }
+        "Given an episode with duration in microseconds" - {
+            "When it's parsed" - {
+                "Then we receive proper episode" {
+                    val goodEpisodeWidDurationInMicroseconds = """{
+  "number": "246",
+  "title": "WRP 246. Programar con lo que no est\u00e1 de moda: PHP",
+  "excerpt": "Desmontando mitos de PHP: lenguaje pasado de moda o todav\u00eda relevante.",
+  "published_at": 1684280419,
+  "id": "a9ee1f451fb2bd81cd773abb7005ebce",
+  "duration": 2994101796
+}"""
+                    val jsonElement = json.decodeFromString<JsonElement>(goodEpisodeWidDurationInMicroseconds)
+                    val result = jsonElement.parseEpisode()
+
+                    val expectedEpisode = Episode(
+                        number = 246,
+                        duration = 2994.seconds,
+                        title = "WRP 246. Programar con lo que no está de moda: PHP",
+                    )
+                    result.shouldBeRight(expectedEpisode)
+                }
+            }
+        }
         "Given an episode with missing duration" - {
             "When it can be recovered from supercoco" - {
-                "Then we received the recovered episode" {
+                "Then we receive the recovered episode" {
                     val badEpisode = """{
   "number": "222",
   "title": "WRP 222. Todo lo que necesitas saber para ser Blockchain Developer con Fernando L\u00f3pez",
@@ -146,20 +169,64 @@ class FetchEpisodesTest : FreeSpec({
                     result.shouldBeRight(expectedEpisode)
                 }
             }
-        }
-        "When it cannot be recovered from supercoco" - {
-            "Then we received the recovered episode" {
-                val badEpisode = """{
+            "When it cannot be recovered from supercoco in microseconds" - {
+                "Then we receive the recovered episode" {
+                    val badEpisode = """{
+  "number": "246",
+  "title": "WRP 246. Programar con lo que no est\u00e1 de moda: PHP",
+  "excerpt": "Desmontando mitos de PHP: lenguaje pasado de moda o todav\u00eda relevante.",
+  "published_at": 1684280419,
+  "id": "a9ee1f451fb2bd81cd773abb7005ebce",
+  "supercoco": 2994101796
+}"""
+                    val jsonElement = json.decodeFromString<JsonElement>(badEpisode)
+                    val result = jsonElement.parseEpisode()
+
+                    val expectedEpisode = Episode(
+                        number = 246,
+                        duration = 2994.seconds,
+                        title = "WRP 246. Programar con lo que no está de moda: PHP",
+                    )
+                    result.shouldBeRight(expectedEpisode)
+                }
+            }
+            "When it cannot be recovered from supercoco" - {
+                "Then we receive a MissingDuration error" {
+                    val badEpisode = """{
   "number": "222",
   "title": "WRP 222. Todo lo que necesitas saber para ser Blockchain Developer con Fernando L\u00f3pez",
   "excerpt": "Las principales ventajas e inconvenientes para tener un nuevo futuro profesional entre cryptos y NFTs.",
   "published_at": 1669765908,
   "id": "0fff26d111b557d0a49e4e02ec1d39f4"
 }"""
-                val jsonElement = json.decodeFromString<JsonElement>(badEpisode)
-                val result = jsonElement.parseEpisode()
+                    val jsonElement = json.decodeFromString<JsonElement>(badEpisode)
+                    val result = jsonElement.parseEpisode()
 
-                result.shouldBeLeft(Errors.JsonParsingError.MissingDuration(jsonElement))
+                    result.shouldBeLeft(Errors.JsonParsingError.MissingDuration(jsonElement))
+                }
+            }
+        }
+        "Given an episode with missing number and duration" - {
+            "When it can be fully recovered" - {
+                "Then we receive the recovered episode" {
+                    val badEpisode = """{
+  "title": "WRP 219. Mastermind Ornitorrincos: Mucha IA y bots de telegram",
+  "excerpt": "Robert, Dani y Gabri se juntan por sexta vez.",
+  "published_at": 1667950903,
+  "id": "BNDv7ReKDZP2Gnrd9k\/Q8mBdwoPqGpKjxzZv6",
+  "supercoco": 2621089114
+}"""
+
+                    val jsonElement = json.decodeFromString<JsonElement>(badEpisode)
+                    val result = jsonElement.parseEpisode()
+
+                    val expectedEpisode = Episode(
+                        number = 219,
+                        duration = 2621.seconds,
+                        title = "WRP 219. Mastermind Ornitorrincos: Mucha IA y bots de telegram",
+                    )
+                    result.shouldBeRight(expectedEpisode)
+                }
             }
         }
     }
