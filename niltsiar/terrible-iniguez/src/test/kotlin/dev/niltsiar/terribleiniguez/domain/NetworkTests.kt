@@ -1,6 +1,6 @@
 package dev.niltsiar.terribleiniguez.domain
 
-import dev.niltsiar.terribleiniguez.network.API_URL
+import dev.niltsiar.terribleiniguez.TERRIBLE_API_URL
 import dev.niltsiar.terribleiniguez.network.makeNetworkRequest
 import dev.niltsiar.terribleiniguez.network.parseEpisode
 import dev.niltsiar.terribleiniguez.network.parseEpisodes
@@ -12,8 +12,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonObject
-
-const val TERRIBLE_API_URL = "$API_URL/terrible"
 
 private val json = Json {
     ignoreUnknownKeys = true

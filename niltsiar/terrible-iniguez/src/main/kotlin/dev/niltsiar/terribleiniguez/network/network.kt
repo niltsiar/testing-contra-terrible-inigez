@@ -5,6 +5,7 @@ import arrow.core.flatten
 import arrow.core.raise.either
 import arrow.core.raise.ensureNotNull
 import arrow.core.recover
+import dev.niltsiar.terribleiniguez.API_URL
 import dev.niltsiar.terribleiniguez.domain.Episode
 import dev.niltsiar.terribleiniguez.domain.Errors
 import io.ktor.client.HttpClient
@@ -23,8 +24,6 @@ import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
-
-const val API_URL = "https://tormenta-codigo-app-terrible.vercel.app/api/podcast"
 
 private val json = Json {
     ignoreUnknownKeys = true
