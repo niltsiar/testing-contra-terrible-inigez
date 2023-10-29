@@ -1,5 +1,6 @@
 package dev.niltsiar.terribleiniguez.domain
 
+import arrow.core.flatMap
 import dev.niltsiar.terribleiniguez.TERRIBLE_API_URL
 import dev.niltsiar.terribleiniguez.network.makeNetworkRequest
 import dev.niltsiar.terribleiniguez.network.parseEpisode
@@ -7,6 +8,7 @@ import dev.niltsiar.terribleiniguez.network.parseEpisodes
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.FreeSpec
+import io.kotest.matchers.shouldNotBe
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -23,8 +25,15 @@ class NetworkTests : FreeSpec({
     "Given a url" - {
         "When fetching the episodes" - {
             "Then it should return a list of episodes" {
-                val episodes = makeNetworkRequest(TERRIBLE_API_URL)
-                episodes.shouldBeRight()
+                val networkResponse = makeNetworkRequest(TERRIBLE_API_URL)
+                networkResponse.shouldBeRight()
+                @Suppress("INFERRED_TYPE_VARIABLE_INTO_POSSIBLE_EMPTY_INTERSECTION")
+                val parsingResult = networkResponse.flatMap { jsonResponse ->
+                    jsonResponse.parseEpisodes()
+                }
+                parsingResult.onRight { (_, episodes) ->
+                    episodes shouldNotBe emptyList<Episode>()
+                }
             }
         }
     }
