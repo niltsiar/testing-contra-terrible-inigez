@@ -42,13 +42,18 @@ data class NetworkEpisode(
     val title: String,
 )
 
-suspend fun fetchEpisodes(url: String = API_URL): Either<Errors, NonEmptyList<Episode>> {
+suspend fun makeNetworkRequest(url: String = API_URL): Either<Errors, String> {
     return Either.catch {
         val httpClient = HttpClient(CIO)
         val response = httpClient.get(url)
-        val textResponse = response.bodyAsText()
-        println(textResponse)
-        val jsonElement = json.decodeFromString<JsonElement>(textResponse)
+        response.bodyAsText()
+    }
+        .mapLeft { throwable -> Errors.NetworkError(throwable) }
+}
+
+fun String.parseEpisodes(): Either<Errors, NonEmptyList<Episode>> {
+    return Either.catch {
+        val jsonElement = json.decodeFromString<JsonElement>(this)
         jsonElement.jsonObject["data"] as JsonArray?
     }
         .mapLeft { throwable -> Errors.NetworkError(throwable) }
@@ -85,10 +90,6 @@ fun JsonElement.parseEpisode(): Either<Errors, Episode> {
             } else {
                 raise(Errors.JsonParsingError.UnknownError(this@parseEpisode, throwable))
             }
-        }
-        .onLeft { throwable ->
-            println("Error decoding the episode: $throwable")
-            println("Received json: $this")
         }
 }
 

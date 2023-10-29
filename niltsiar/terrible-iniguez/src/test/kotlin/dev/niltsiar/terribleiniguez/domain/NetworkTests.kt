@@ -1,7 +1,7 @@
 package dev.niltsiar.terribleiniguez.domain
 
 import dev.niltsiar.terribleiniguez.network.API_URL
-import dev.niltsiar.terribleiniguez.network.fetchEpisodes
+import dev.niltsiar.terribleiniguez.network.makeNetworkRequest
 import dev.niltsiar.terribleiniguez.network.parseEpisode
 import dev.niltsiar.terribleiniguez.network.parseEpisodes
 import io.kotest.assertions.arrow.core.shouldBeLeft
@@ -20,12 +20,12 @@ private val json = Json {
     isLenient = true
 }
 
-class FetchEpisodesTest : FreeSpec({
+class NetworkTests : FreeSpec({
 
     "Given a url" - {
         "When fetching the episodes" - {
             "Then it should return a list of episodes" {
-                val episodes = fetchEpisodes(TERRIBLE_API_URL)
+                val episodes = makeNetworkRequest(TERRIBLE_API_URL)
                 episodes.shouldBeRight()
             }
         }
