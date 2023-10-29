@@ -1,9 +1,8 @@
 package dev.niltsiar.terribleiniguez.domain
 
 import arrow.core.Either
-import arrow.core.NonEmptyList
 import arrow.core.raise.either
-import arrow.core.raise.ensureNotNull
+import arrow.core.raise.ensure
 import kotlin.time.Duration
 
 data class Episode(
@@ -19,8 +18,8 @@ data class EpisodesResult(
     val selectedTitlesCombinedDurationUnderTwoHours: List<String>,
 )
 
-fun processEpisodes(episodes: NonEmptyList<Episode>): Either<Errors, EpisodesResult> = either {
-    ensureNotNull(episodes) { Errors.NoPodcastsInResponseError }
+fun processEpisodes(episodes: List<Episode>): Either<Errors, EpisodesResult> = either {
+    ensure(episodes.isNotEmpty()) { Errors.NoPodcastsInResponseError }
 
     val sortedEpisodes = episodes.sortedBy { ep -> ep.number }
 

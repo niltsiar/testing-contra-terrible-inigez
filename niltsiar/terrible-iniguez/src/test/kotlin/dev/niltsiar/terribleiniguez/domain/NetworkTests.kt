@@ -65,7 +65,7 @@ class NetworkTests : FreeSpec({
                     title = "WRP 248. Tips de seguridad OWASP para developers con Érica Aguado",
                 )
 
-                result.shouldBeRight(listOf(expectedEpisode, expectedEpisode))
+                result.shouldBeRight(emptyList<Errors.JsonParsingError>() to listOf(expectedEpisode, expectedEpisode))
             }
         }
     }

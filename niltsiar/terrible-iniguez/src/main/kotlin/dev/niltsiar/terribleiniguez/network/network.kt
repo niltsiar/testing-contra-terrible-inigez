@@ -1,14 +1,10 @@
 package dev.niltsiar.terribleiniguez.network
 
 import arrow.core.Either
-import arrow.core.NonEmptyList
-import arrow.core.flatMap
 import arrow.core.flatten
-import arrow.core.left
 import arrow.core.raise.either
 import arrow.core.raise.ensureNotNull
 import arrow.core.recover
-import arrow.core.right
 import dev.niltsiar.terribleiniguez.domain.Episode
 import dev.niltsiar.terribleiniguez.domain.Errors
 import io.ktor.client.HttpClient
@@ -51,7 +47,7 @@ suspend fun makeNetworkRequest(url: String = API_URL): Either<Errors, String> {
         .mapLeft { throwable -> Errors.NetworkError(throwable) }
 }
 
-fun String.parseEpisodes(): Either<Errors, NonEmptyList<Episode>> {
+fun String.parseEpisodes(): Either<Errors, Pair<List<Errors.JsonParsingError>, List<Episode>>> {
     return Either.catch {
         val jsonElement = json.decodeFromString<JsonElement>(this)
         jsonElement.jsonObject["data"] as JsonArray?
@@ -59,27 +55,23 @@ fun String.parseEpisodes(): Either<Errors, NonEmptyList<Episode>> {
         .mapLeft { throwable -> Errors.NetworkError(throwable) }
         .map { jsonEpisodes ->
             jsonEpisodes.parseEpisodes()
-                .flatMap { episodes ->
-                    if (episodes.isEmpty()) {
-                        Errors.NoPodcastsInResponseError.left()
-                    } else {
-                        NonEmptyList(episodes.first(), episodes.drop(1)).right()
-                    }
-                }
         }
         .flatten()
 }
 
-fun JsonArray?.parseEpisodes(): Either<Errors, List<Episode>> = either {
+fun JsonArray?.parseEpisodes(): Either<Errors, Pair<List<Errors.JsonParsingError>, List<Episode>>> = either {
     ensureNotNull(this@parseEpisodes) { Errors.NoPodcastsInResponseError }
 
-    mapNotNull { jsonEpisode ->
-        jsonEpisode.parseEpisode()
-            .getOrNull()
+    fold((emptyList<Errors.JsonParsingError>() to emptyList<Episode>())) { acc, jsonElement ->
+        jsonElement.parseEpisode()
+            .fold(
+                ifLeft = { error -> acc.first + error to acc.second },
+                ifRight = { episode -> acc.first to acc.second + episode },
+            )
     }
 }
 
-fun JsonElement.parseEpisode(): Either<Errors, Episode> {
+fun JsonElement.parseEpisode(): Either<Errors.JsonParsingError, Episode> {
     return Either.catch {
         val networkEpisode = json.decodeFromJsonElement(NetworkEpisode.serializer(), this)
         Episode(from = networkEpisode)
@@ -93,7 +85,7 @@ fun JsonElement.parseEpisode(): Either<Errors, Episode> {
         }
 }
 
-fun JsonElement.tryParseEpisode(): Either<Errors, Episode> = either {
+fun JsonElement.tryParseEpisode(): Either<Errors.JsonParsingError, Episode> = either {
     val title = jsonObject["title"]?.jsonPrimitive?.content ?: raise(Errors.JsonParsingError.MissingTitle(this@tryParseEpisode))
     val number = jsonObject["number"]?.jsonPrimitive?.intOrNull
         ?: title.removePrefix("WRP ").substringBefore(".").toIntOrNull()
