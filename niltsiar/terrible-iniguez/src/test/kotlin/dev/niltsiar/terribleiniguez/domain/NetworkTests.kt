@@ -34,7 +34,8 @@ class NetworkTests : FreeSpec({
     "Given a list of good episodes" - {
         "When they are parsed" - {
             "Then we got the expected results" {
-                val goodEpisode = """{
+                val goodEpisode = """
+{
   "data": [
     {
       "number": "248",
@@ -53,7 +54,8 @@ class NetworkTests : FreeSpec({
       "id": "BNDv7ReKDZP2Gnrd9k\/9541YGmJ9z7K3gWLpe"
     }
   ]
-}"""
+}
+""".trimIndent()
 
                 val jsonElement = json.decodeFromString<JsonElement>(goodEpisode)
                 val data = jsonElement.jsonObject["data"] as JsonArray
@@ -74,29 +76,55 @@ class NetworkTests : FreeSpec({
         "Given an episode with missing title" - {
             "When it is parsed" - {
                 "Then we receive a MissingTitle error" {
-                    val badEpisode = """{
-  "excerpt": "Preguntamos a un experto developer en node.js sobre las ventajas e inconvenientes de este lenguaje.",
+                    val badEpisode = """
+{
+  "number": "263",
   "published_at": 1694563528,
   "duration": "4138",
   "id": "BNDv7ReKDZP2Gnrd9k\/Q8mBdwoPqmpPjxzZv6"
-}"""
+}
+""".trimIndent()
                     val jsonElement = json.decodeFromString<JsonElement>(badEpisode)
                     val result = jsonElement.parseEpisode()
 
                     result.shouldBeLeft(Errors.JsonParsingError.MissingTitle(jsonElement))
                 }
             }
+            "When it can be recovered using excerpt" - {
+                "Then we receive the recovered episode" {
+                    val badEpisode = """
+{
+  "number": 226,
+  "excerpt": "5 proyectos que te van a encantar.",
+  "published_at": 1672821686,
+  "duration": "3660",
+  "id": "6ccf82594cce11357ffaa3ae0469535a"
+}
+""".trimIndent()
+                    val jsonElement = json.decodeFromString<JsonElement>(badEpisode)
+                    val result = jsonElement.parseEpisode()
+
+                    val expectedEpisode = Episode(
+                        number = 226,
+                        duration = 3660.seconds,
+                        title = "5 proyectos que te van a encantar.",
+                    )
+                    result.shouldBeRight(expectedEpisode)
+                }
+            }
         }
         "Given an episode with missing number" - {
             "When it can be extracted from the title" - {
                 "Then we receive the recovered episode" {
-                    val badEpisode = """{
+                    val badEpisode = """
+{
   "title": "WRP 244. D\u00f3nde poner el foco para actualizarse",
   "excerpt": "Tu mejor opci\u00f3n para seguir actualizado.",
   "published_at": 1683099502,
   "duration": "2574",
   "id": "BNDv7ReKDZP2Gnrd9k\/qZvpVO8PXdRPanNGkl"
-}"""
+}
+""".trimIndent()
                     val jsonElement = json.decodeFromString<JsonElement>(badEpisode)
                     val result = jsonElement.parseEpisode()
 
@@ -109,32 +137,47 @@ class NetworkTests : FreeSpec({
                 }
             }
             "When it can't be extracted from the title" - {
-                "Then we receive a MissingNumber error" {
-                    val badEpisode = """{
-  "title": "WRP WRONG_NUMBER. Desplegar en producci\u00f3n: Estrategias Feature Flags y Expand-Contract",
-  "excerpt": "Tipos de despliegue y definici\u00f3n de los m\u00e1s efectivos.",
-  "published_at": 1677629119,
-  "duration": "3158",
-  "id": "3381afe484e4b10af30f1ff0258a7705"
-}"""
-                    val jsonElement = json.decodeFromString<JsonElement>(badEpisode)
-                    val result = jsonElement.parseEpisode()
+                val unparsableNumberFromTitleEpisode = """
+  {
+    "title": "WRP WRONG_NUMBER. Desplegar en producci\u00f3n: Estrategias Feature Flags y Expand-Contract",
+    "excerpt": "Tipos de despliegue y definici\u00f3n de los m\u00e1s efectivos.",
+    "published_at": 1677629119,
+    "duration": "3158",
+    "id": "3381afe484e4b10af30f1ff0258a7705"
+  }
+""".trimIndent()
+                val missingTitleAndNumberEpisode = """
+{
+  "excerpt": "Las principales ventajas e inconvenientes para tener un nuevo futuro profesional entre cryptos y NFTs.",
+  "published_at": 1669765908,
+  "duration": 6328,
+  "id": "BNDv7ReKDZP2Gnrd9k/W6ADGpkPRg6Jrl3nXR"
+}
+""".trimIndent()
+                listOf(unparsableNumberFromTitleEpisode, missingTitleAndNumberEpisode).forEach { badEpisode ->
+                    "Then we receive a MissingNumber error" {
 
-                    result.shouldBeLeft(Errors.JsonParsingError.MissingNumber(jsonElement))
+                        val jsonElement = json.decodeFromString<JsonElement>(badEpisode)
+                        val result = jsonElement.parseEpisode()
+
+                        result.shouldBeLeft(Errors.JsonParsingError.MissingNumber(jsonElement))
+                    }
                 }
             }
         }
         "Given an episode with duration in microseconds" - {
             "When it's parsed" - {
                 "Then we receive proper episode" {
-                    val goodEpisodeWidDurationInMicroseconds = """{
+                    val goodEpisodeWidDurationInMicroseconds = """
+{
   "number": "246",
   "title": "WRP 246. Programar con lo que no est\u00e1 de moda: PHP",
   "excerpt": "Desmontando mitos de PHP: lenguaje pasado de moda o todav\u00eda relevante.",
   "published_at": 1684280419,
   "id": "a9ee1f451fb2bd81cd773abb7005ebce",
   "duration": 2994101796
-}"""
+}
+""".trimIndent()
                     val jsonElement = json.decodeFromString<JsonElement>(goodEpisodeWidDurationInMicroseconds)
                     val result = jsonElement.parseEpisode()
 
@@ -150,14 +193,16 @@ class NetworkTests : FreeSpec({
         "Given an episode with missing duration" - {
             "When it can be recovered from supercoco" - {
                 "Then we receive the recovered episode" {
-                    val badEpisode = """{
+                    val badEpisode = """
+{
   "number": "222",
   "title": "WRP 222. Todo lo que necesitas saber para ser Blockchain Developer con Fernando L\u00f3pez",
   "excerpt": "Las principales ventajas e inconvenientes para tener un nuevo futuro profesional entre cryptos y NFTs.",
   "published_at": 1669765908,
   "id": "0fff26d111b557d0a49e4e02ec1d39f4",
   "supercoco": "6328"
-}"""
+}
+""".trimIndent()
                     val jsonElement = json.decodeFromString<JsonElement>(badEpisode)
                     val result = jsonElement.parseEpisode()
 
@@ -171,14 +216,16 @@ class NetworkTests : FreeSpec({
             }
             "When it cannot be recovered from supercoco in microseconds" - {
                 "Then we receive the recovered episode" {
-                    val badEpisode = """{
+                    val badEpisode = """
+{
   "number": "246",
   "title": "WRP 246. Programar con lo que no est\u00e1 de moda: PHP",
   "excerpt": "Desmontando mitos de PHP: lenguaje pasado de moda o todav\u00eda relevante.",
   "published_at": 1684280419,
   "id": "a9ee1f451fb2bd81cd773abb7005ebce",
   "supercoco": 2994101796
-}"""
+}
+""".trimIndent()
                     val jsonElement = json.decodeFromString<JsonElement>(badEpisode)
                     val result = jsonElement.parseEpisode()
 
@@ -192,13 +239,15 @@ class NetworkTests : FreeSpec({
             }
             "When it cannot be recovered from supercoco" - {
                 "Then we receive a MissingDuration error" {
-                    val badEpisode = """{
+                    val badEpisode = """
+{
   "number": "222",
   "title": "WRP 222. Todo lo que necesitas saber para ser Blockchain Developer con Fernando L\u00f3pez",
   "excerpt": "Las principales ventajas e inconvenientes para tener un nuevo futuro profesional entre cryptos y NFTs.",
   "published_at": 1669765908,
   "id": "0fff26d111b557d0a49e4e02ec1d39f4"
-}"""
+}
+""".trimIndent()
                     val jsonElement = json.decodeFromString<JsonElement>(badEpisode)
                     val result = jsonElement.parseEpisode()
 
@@ -209,13 +258,15 @@ class NetworkTests : FreeSpec({
         "Given an episode with missing number and duration" - {
             "When it can be fully recovered" - {
                 "Then we receive the recovered episode" {
-                    val badEpisode = """{
+                    val badEpisode = """
+{
   "title": "WRP 219. Mastermind Ornitorrincos: Mucha IA y bots de telegram",
   "excerpt": "Robert, Dani y Gabri se juntan por sexta vez.",
   "published_at": 1667950903,
   "id": "BNDv7ReKDZP2Gnrd9k\/Q8mBdwoPqGpKjxzZv6",
   "supercoco": 2621089114
-}"""
+}
+""".trimIndent()
 
                     val jsonElement = json.decodeFromString<JsonElement>(badEpisode)
                     val result = jsonElement.parseEpisode()

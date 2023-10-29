@@ -86,7 +86,9 @@ fun JsonElement.parseEpisode(): Either<Errors.JsonParsingError, Episode> {
 }
 
 fun JsonElement.tryParseEpisode(): Either<Errors.JsonParsingError, Episode> = either {
-    val title = jsonObject["title"]?.jsonPrimitive?.content ?: raise(Errors.JsonParsingError.MissingTitle(this@tryParseEpisode))
+    val title = jsonObject["title"]?.jsonPrimitive?.content
+        ?: jsonObject["excerpt"]?.jsonPrimitive?.content
+        ?: raise(Errors.JsonParsingError.MissingTitle(this@tryParseEpisode))
     val number = jsonObject["number"]?.jsonPrimitive?.intOrNull
         ?: title.removePrefix("WRP ").substringBefore(".").toIntOrNull()
         ?: raise(Errors.JsonParsingError.MissingNumber(this@tryParseEpisode))
